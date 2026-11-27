@@ -65,12 +65,18 @@ function autopilot(state) {
   if (state.turkey.hidden) return { move: 0, jump: false, dash: false, hide: false };
   const jump = (dangerAhead(state, 0.5) || lowKnifeClose(state)) && state.turkey.grounded;
   const dash = state.gap < 150 && state.dash > 40;
+  // Hide only when the farmer is actually threatening: hiding while he is far
+  // away wastes the run (hazards keep scrolling while the turkey stands still).
   let hide = false;
-  for (const hay of state.hides) {
-    if (!hay.used && Math.abs((hay.x + hay.width / 2) - (state.turkey.x + 37)) < 60 && state.turkey.grounded) hide = true;
+  if (state.gap < 200) {
+    for (const hay of state.hides) {
+      if (!hay.used && Math.abs((hay.x + hay.width / 2) - (state.turkey.x + 37)) < 60 && state.turkey.grounded) hide = true;
+    }
   }
   return { move: dodgeKnife(state), jump, dash, hide };
 }
+
+export { autopilot };
 
 function runFor(world, seconds, pilot) {
   let events = 0;
@@ -107,8 +113,20 @@ export function stageShot(name, world) {
   }
   if (name === 'chase') {
     runFor(world, CHASE_SECONDS, true);
-    // Force the farmer close so the chase reads at a glance.
+    // Wait for a haystack on screen (the hide mechanic must read), without
+    // letting the autopilot hide the turkey for the frame.
+    for (let i = 0; i < 240; i += 1) {
+      const hayOnScreen = world.state.hides.some((h) => !h.used && h.x > 700 && h.x < 1150);
+      if (hayOnScreen) break;
+      const input = autopilot(world.state);
+      input.hide = false;
+      world.step(SAMPLE, input.move, input.jump, input.dash, input.hide);
+    }
+    // Force the farmer close and the SPOTTED banner up, then frame the pair.
     world.state.gap = 78;
+    world.state.farmer.shout = 1.2;
+    world.state.turkey.x = 430;
+    world.state.farmer.x = 430 - 78 - 84 + 20;
     return { screen: SCREEN_PLAY, best: world.state.score };
   }
   if (name === 'kitchen') {

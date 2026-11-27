@@ -142,37 +142,108 @@ export function createRenderer(canvas) {
         ctx.fill();
       }
     } else {
-      // Kitchen: checkered floor, big window, shelves, hanging pots.
-      ctx.fillStyle = '#e8d9b0';
+      // Kitchen: warm wall, sunset window, shelf of labelled jars, hanging
+      // copper pots, and the dinner table waiting with its cloche.
+      ctx.fillStyle = '#f0dcb2';
       ctx.fillRect(0, 0, VIEW.width, 620);
-      ctx.fillStyle = '#d9c48f';
-      for (let x = 0; x < VIEW.width; x += 90) ctx.fillRect(x, 0, 4, 620);
+      ctx.fillStyle = '#e0c48f';
+      for (let y = 70; y < 620; y += 110) ctx.fillRect(0, y, VIEW.width, 4);
+      // Window: sunset over the farm, herb pot on the sill.
       ctx.fillStyle = '#7a9e7e';
-      ctx.fillRect(120, 90, 300, 220);
-      ctx.fillStyle = '#bfe3ff';
+      ctx.fillRect(120, 90, 300, 230);
+      const sunGrad = ctx.createLinearGradient(0, 106, 0, 294);
+      sunGrad.addColorStop(0, '#ffd23c');
+      sunGrad.addColorStop(1, '#ff8c42');
+      ctx.fillStyle = sunGrad;
       ctx.fillRect(136, 106, 268, 188);
+      ctx.fillStyle = '#7a3b1e';
+      ctx.beginPath();
+      ctx.ellipse(300, 294, 120, 26, 0, Math.PI, 0);
+      ctx.fill();
       ctx.fillStyle = '#fff3d6';
       ctx.fillRect(262, 106, 12, 188);
       ctx.fillRect(136, 190, 268, 12);
       ctx.fillStyle = '#c15527';
       ctx.beginPath();
-      ctx.arc(200, 260, 34, 0, Math.PI * 2);
+      ctx.arc(150, 296, 14, 0, Math.PI * 2);
       ctx.fill();
-      // Shelf with jars.
+      ctx.fillStyle = '#5d7d38';
+      ctx.beginPath();
+      ctx.ellipse(150, 282, 18, 8, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Wall clock.
+      ctx.fillStyle = '#fff3d6';
+      ctx.beginPath();
+      ctx.arc(640, 130, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#8a5a2e';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(640, 130, 34, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(640, 130); ctx.lineTo(640, 106);
+      ctx.moveTo(640, 130); ctx.lineTo(658, 138);
+      ctx.stroke();
+      // Shelf with labelled jars.
       ctx.fillStyle = '#8a5a2e';
-      ctx.fillRect(760, 180, 380, 14);
+      ctx.fillRect(760, 200, 380, 14);
       const jarColors = ['#e2725b', '#f2c230', '#7a9e7e', '#c15527'];
       jarColors.forEach((c, i) => {
         ctx.fillStyle = c;
-        roundRect(ctx, 780 + i * 90, 120, 56, 60, 8);
+        roundRect(ctx, 780 + i * 90, 140, 56, 60, 8);
         ctx.fill();
+        ctx.fillStyle = '#8a5a2e';
+        ctx.fillRect(788 + i * 90, 132, 40, 10);
+        ctx.fillStyle = '#fff3d6';
+        ctx.fillRect(790 + i * 90, 162, 36, 18);
       });
+      // Hanging copper pots, top right.
+      for (let i = 0; i < 3; i += 1) {
+        const px = 830 + i * 110;
+        ctx.strokeStyle = '#8a5a2e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(px, 0); ctx.lineTo(px, 54);
+        ctx.stroke();
+        ctx.fillStyle = '#b87333';
+        ctx.beginPath();
+        ctx.arc(px, 84, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#8a4b1d';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, 84, 30, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // Dinner table with the cloche — what the turkey is running from.
+      ctx.fillStyle = '#8a5a2e';
+      ctx.fillRect(900, 470, 300, 16);
+      ctx.fillStyle = '#6b4423';
+      ctx.fillRect(920, 486, 14, 134);
+      ctx.fillRect(1166, 486, 14, 134);
+      ctx.fillStyle = '#d9d9d9';
+      ctx.beginPath();
+      ctx.ellipse(1050, 470, 70, 34, 0, Math.PI, 0);
+      ctx.fill();
+      text(ctx, 'DINNER', 1050, 516, 16, '#2b1a12', 'center');
     }
     // Ground strip.
     ctx.fillStyle = stageIndex === 2 ? '#b98a5a' : '#7a9e4f';
     ctx.fillRect(0, GROUND_Y, VIEW.width, VIEW.height - GROUND_Y);
     ctx.fillStyle = stageIndex === 2 ? '#a1764a' : '#5d7d38';
     ctx.fillRect(0, GROUND_Y, VIEW.width, 10);
+    if (stageIndex === 2) {
+      // Checkered kitchen floor.
+      for (let x = 0; x < VIEW.width; x += 64) {
+        for (let y = GROUND_Y + 10; y < VIEW.height; y += 44) {
+          if (((x / 64) + ((y - GROUND_Y - 10) / 44)) % 2 === 0) {
+            ctx.fillStyle = 'rgba(0,0,0,0.09)';
+            ctx.fillRect(x, y, 64, 44);
+          }
+        }
+      }
+    }
     if (stageIndex !== 2) {
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
       for (let x = -par(40); x < VIEW.width; x += 90) {
@@ -417,7 +488,13 @@ export function createRenderer(canvas) {
       ctx.lineTo(item.x + item.width / 2 + i * 22, item.y + item.height - 12);
       ctx.stroke();
     }
-    if (!item.used) text(ctx, 'HIDE! ↓', item.x + item.width / 2, item.y - 8, 16, '#fff3d6', 'center');
+    if (!item.used) {
+      // Dark pill so the label reads on the cream kitchen wall and the dark fence alike.
+      ctx.fillStyle = 'rgba(43,26,18,0.72)';
+      roundRect(ctx, item.x + item.width / 2 - 48, item.y - 26, 96, 24, 12);
+      ctx.fill();
+      text(ctx, 'HIDE! ↓', item.x + item.width / 2, item.y - 8, 16, '#fff3d6', 'center');
+    }
   }
 
   function drawHud(state, stageLabel) {
@@ -490,7 +567,16 @@ export function createRenderer(canvas) {
     ctx.fillStyle = '#7a9e4f';
     roundRect(ctx, 440, 72, Math.max(8, 400 * (state.distance / ESCAPE_DISTANCE)), 14, 7);
     ctx.fill();
-    text(ctx, '🌲 FOREST GATE', 640, 108, 14, INK, 'center');
+    // Turkey marker riding the bar.
+    ctx.fillStyle = '#fff3d6';
+    ctx.beginPath();
+    ctx.arc(Math.min(836, Math.max(444, 440 + 400 * (state.distance / ESCAPE_DISTANCE))), 79, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // Stage labels under the bar: the run's map at a glance.
+    text(ctx, 'FARMYARD', 440, 104, 11, CREAM);
+    text(ctx, 'BARN', 554, 104, 11, CREAM);
+    text(ctx, 'KITCHEN', 697, 104, 11, CREAM);
+    text(ctx, '🌲 WOODS', 840, 104, 11, '#7ddc7d', 'right');
   }
 
   function drawTitle(state, best) {
@@ -558,6 +644,11 @@ export function createRenderer(canvas) {
       return;
     }
     const stageIndex = state.stageIndex;
+    ctx.save();
+    if (state.flash > 0) {
+      const mag = state.flash * 14;
+      ctx.translate(Math.sin(time * 91) * mag, Math.cos(time * 113) * mag * 0.6);
+    }
     drawSky(stageIndex, state.distance);
     drawBackdrop(stageIndex, state.distance);
     for (const hay of state.hides) drawHay(hay);
@@ -593,6 +684,19 @@ export function createRenderer(canvas) {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    // The farmer's line of sight: a red cone ahead of him while he hunts.
+    if (state.farmer.mode !== 'search' && !state.turkey.hidden) {
+      const fx = state.farmer.x + FARMER.width / 2;
+      const fy = state.farmer.y + 40;
+      const reach = Math.max(120, state.gap + 140);
+      ctx.fillStyle = 'rgba(255,60,40,0.10)';
+      ctx.beginPath();
+      ctx.moveTo(fx, fy - 26);
+      ctx.lineTo(fx + reach, fy - 90);
+      ctx.lineTo(fx + reach, fy + 60);
+      ctx.closePath();
+      ctx.fill();
+    }
     drawFarmer(state.farmer, state.farmer.mode);
     drawTurkey(state.turkey, state.turkey.hidden, time);
     drawHud(state, STAGES[state.stageIndex].label);
@@ -602,6 +706,7 @@ export function createRenderer(canvas) {
       text(ctx, 'PAUSED', 640, 330, 72, CREAM, 'center');
       text(ctx, 'Press P or click to keep running', 640, 390, 26, '#ffb347', 'center');
     }
+    ctx.restore();
   }
 
   return { draw };

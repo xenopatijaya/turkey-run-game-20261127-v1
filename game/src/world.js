@@ -71,7 +71,7 @@ export function createWorld(random) {
     } else if (roll < 0.72) {
       state.obstacles.push({ kind: KIND_PUMPKIN, x, y: GROUND_Y - 52, width: 62, height: 52, vx: 0 });
       state.pickups.push({ kind: KIND_CORN, x: x + 40, y: GROUND_Y - 190, width: 34, height: 44, bob: random.range(0, 6) });
-    } else if (roll < 0.84) {
+    } else if (roll < 0.88) {
       state.hides.push({ kind: KIND_HAY, x, y: GROUND_Y - 96, width: 110, height: 96, used: false });
       state.pickups.push({ kind: KIND_CORN, x: x + 130, y: GROUND_Y - 60, width: 34, height: 44, bob: 0 });
     } else {

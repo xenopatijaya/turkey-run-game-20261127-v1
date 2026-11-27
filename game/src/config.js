@@ -25,6 +25,6 @@ export const FARMER = {
 export const RUN = {
   lives: 3, startGap: 260, maxGap: 420,
   dashCost: 34, dashGain: 150, dashSpeed: 520,
-  hideSeconds: 2.2, hideGain: 120,
+  hideSeconds: 3.0, hideGain: 160,
   cornScore: 50, pieScore: 150, meterScore: 1,
 };
