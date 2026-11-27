@@ -490,7 +490,7 @@ export function createRenderer(canvas) {
     ctx.fillStyle = '#7a9e4f';
     roundRect(ctx, 440, 72, Math.max(8, 400 * (state.distance / ESCAPE_DISTANCE)), 14, 7);
     ctx.fill();
-    text(ctx, '🌲 FOREST GATE', 640, 106, 14, CREAM, 'center');
+    text(ctx, '🌲 FOREST GATE', 640, 108, 14, INK, 'center');
   }
 
   function drawTitle(state, best) {
