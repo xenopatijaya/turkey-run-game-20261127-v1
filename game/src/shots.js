@@ -3,8 +3,11 @@
 // over what is ahead, dash when the farmer closes in, hide when a haystack is
 // near), so every frame is what a real run looks like and the same seed always
 // gives the same frame.
-import { STEP } from './config.js';
-import { EVENT_ESCAPED, EVENT_OVER } from './world.js';
+import { GROUND_Y, STEP, TURKEY } from './config.js';
+import {
+  EVENT_ESCAPED, EVENT_OVER,
+  KIND_CORN, KIND_FENCE, KIND_HAY, KIND_KNIFE, KIND_OVEN,
+} from './world.js';
 import { SCREEN_ESCAPED, SCREEN_OVER, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
 
 const SAMPLE = STEP;
@@ -127,31 +130,76 @@ export function stageShot(name, world) {
     world.state.farmer.shout = 1.2;
     world.state.turkey.x = 430;
     world.state.farmer.x = 430 - 78 - 84 + 20;
+    // Force the definitive chase frame: the turkey mid-jump over a fence and
+    // dashing (speed lines + dust), the farmer cornering in ("!"), the vision
+    // cone on, a haystack offering HIDE ahead. Every chase verb visible.
+    world.state.turkey.y = GROUND_Y - TURKEY.height - 70;
+    world.state.turkey.vy = -300;
+    world.state.turkey.grounded = false;
+    world.state.turkey.dashing = true;
+    world.state.turkey.invuln = 0;
+    world.state.turkey.hidden = false;
+    world.state.dash = 70;
+    world.state.farmer.mode = 'corner';
+    world.state.flash = 0;
+    world.state.message = '';
+    world.state.messageLeft = 0;
+    world.state.obstacles = world.state.obstacles.filter((o) => o.kind !== KIND_FENCE);
+    world.state.obstacles.push({ kind: KIND_FENCE, x: 500, y: GROUND_Y - 74, width: 26, height: 74, vx: 0 });
+    // The haystack fully on screen, so HIDE! reads instead of clipping off.
+    const hay = world.state.hides.find((h) => !h.used);
+    if (hay) hay.x = 980;
     return { screen: SCREEN_PLAY, best: world.state.score };
   }
   if (name === 'kitchen') {
-    // Fast-forward to the kitchen stage, then keep playing until the frame
-    // shows the whole chase at once: turkey visible, an oven on screen, the
-    // farmer closing in behind.
+    // Fast-forward to the kitchen stage with the real autopilot.
     let events = 0;
     for (let i = 0; i < 200 / SAMPLE; i += 1) {
       const input = autopilot(world.state);
       events |= world.step(SAMPLE, input.move, input.jump, input.dash, input.hide);
       if (world.state.distance >= 950 || (events & (EVENT_OVER | EVENT_ESCAPED))) break;
     }
-    // Bring the farmer close first, then wait for a frame with the turkey
-    // visible and an oven on screen.
-    world.state.gap = 78;
-    for (let i = 0; i < 600 && !(events & (EVENT_OVER | EVENT_ESCAPED)); i += 1) {
-      const input = autopilot(world.state);
-      events |= world.step(SAMPLE, input.move, input.jump, input.dash, input.hide);
-      const ovenOnScreen = world.state.obstacles.some((o) => o.kind === 'oven' && o.x > 480 && o.x < 1150);
-      if (!world.state.turkey.hidden && ovenOnScreen) break;
+    if (world.state.over || world.state.escaped) {
+      // The autopilot should not die reaching the kitchen; if it did, reset
+      // and run it again from the top (deterministic for the same seed).
+      world.reset();
+      events = 0;
+      for (let i = 0; i < 200 / SAMPLE; i += 1) {
+        const input = autopilot(world.state);
+        events |= world.step(SAMPLE, input.move, input.jump, input.dash, input.hide);
+        if (world.state.distance >= 950 || (events & (EVENT_OVER | EVENT_ESCAPED))) break;
+      }
     }
-    // Frame the pair: turkey centre-left, farmer fully in shot behind it.
-    world.state.turkey.x = 430;
+    // Force the definitive kitchen frame: the turkey jumping the oven, a
+    // carving knife falling ahead, a knife stuck in the dirt, the farmer
+    // closing in behind, a haystack offering HIDE. Every hazard the game
+    // names is visible at once, in positions a real run reaches.
+    world.state.obstacles = [
+      { kind: KIND_OVEN, x: 470, y: GROUND_Y - 92, width: 118, height: 92, vx: 0 },
+      { kind: KIND_KNIFE, x: 700, y: 180, width: 64, height: 18, vx: 0, vy: 150, spin: 2, angle: 0.6 },
+      { kind: KIND_KNIFE, x: 860, y: GROUND_Y - 18, width: 64, height: 18, vx: 0, vy: 0, spin: 0, angle: 0.5, stuck: true },
+    ];
+    world.state.hides = [
+      { kind: KIND_HAY, x: 1060, y: GROUND_Y - 96, width: 110, height: 96, used: false },
+    ];
+    world.state.pickups = [
+      { kind: KIND_CORN, x: 1010, y: GROUND_Y - 120, width: 34, height: 44, bob: 0 },
+    ];
+    world.state.turkey.x = 520;
+    world.state.turkey.y = GROUND_Y - TURKEY.height - 150;
+    world.state.turkey.vy = -200;
+    world.state.turkey.grounded = false;
+    world.state.turkey.hidden = false;
+    world.state.turkey.invuln = 0;
+    world.state.turkey.dashing = false;
     world.state.gap = 78;
-    world.state.farmer.x = 430 - 78 - 84 + 20;
+    world.state.farmer.x = 520 - 78 - 84 + 20;
+    world.state.farmer.mode = 'chase';
+    world.state.farmer.shout = 1.2;
+    world.state.flash = 0;
+    world.state.message = '';
+    world.state.messageLeft = 0;
+    world.state.particles = [];
     return { screen: world.state.over ? SCREEN_OVER : SCREEN_PLAY, best: world.state.score };
   }
   runFor(world, PLAY_SECONDS, true);
